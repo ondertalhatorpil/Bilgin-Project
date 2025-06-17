@@ -7,14 +7,22 @@ WORKDIR /app
 # Tüm dosyaları kopyala
 COPY . .
 
-# Dependencies yükle (dev dependencies dahil - build için gerekli)
-RUN npm install
+# Debug - Node ve npm versiyonlarını kontrol et
+RUN node --version && npm --version
 
-# react-scripts'in yüklendiğini kontrol et
-RUN ls -la node_modules/.bin/ | grep react-scripts || echo "react-scripts not found"
+# Dependencies yükle
+RUN npm install --force
+
+# Debug - Yüklenen paketleri kontrol et
+RUN ls -la node_modules/.bin/ || echo "node_modules/.bin bulunamadı"
+RUN npm list react-scripts || echo "react-scripts paketi bulunamadı"
+
+# react-scripts'i global yükle ve kontrol et
+RUN npm install -g react-scripts@5.0.1
+RUN which react-scripts || echo "react-scripts PATH'de bulunamadı"
 
 # React uygulamasını build et
-RUN npm run build
+RUN npx react-scripts build
 
 # Production stage - Nginx ile serve et
 FROM nginx:alpine
