@@ -4,14 +4,14 @@ FROM node:18-alpine AS builder
 # Çalışma dizinini ayarla
 WORKDIR /app
 
-# Package.json dosyalarını kopyala
-COPY package*.json ./
-
-# Dependencies yükle
-RUN npm ci --only=production
-
-# Kaynak kodları kopyala
+# Tüm dosyaları kopyala
 COPY . .
+
+# Dependencies yükle (dev dependencies dahil - build için gerekli)
+RUN npm install
+
+# react-scripts'in yüklendiğini kontrol et
+RUN ls -la node_modules/.bin/ | grep react-scripts || echo "react-scripts not found"
 
 # React uygulamasını build et
 RUN npm run build
