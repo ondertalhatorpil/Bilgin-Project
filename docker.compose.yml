@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Backend Service - Node.js API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quiz-backend
+    restart: unless-stopped
+    ports:
+      - "8432:5001"  # Dış port: 8432, İç port: 5001
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+    networks:
+      - quiz-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5001', (res) => { if (res.statusCode === 200) process.exit(0); else process.exit(1); }).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=false"  # Reverse proxy için
+
+  # Frontend Service - React + Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quiz-frontend
+    restart: unless-stopped
+    ports:
+      - "7391:80"   # Dış port: 7391, İç port: 80
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - quiz-network
+    labels:
+      - "traefik.enable=false"  # Reverse proxy için
+
+# Network tanımlaması
+networks:
+  quiz-network:
+    driver: bridge
+    name: quiz-app-network
+
+# Volume tanımlaması (gelecekte log veya data için)
+volumes:
+  quiz-logs:
+    driver: local
+    name: quiz-app-logs
